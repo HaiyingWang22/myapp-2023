@@ -1,0 +1,67 @@
+<div id="main">
+    <div class="content">
+        <div class="poplar-game-list">
+
+            <h1>Popular Games</h1>
+            {{#if hasDatabaseError}}
+            <div>
+                Sorry, There was a problem with the Database:{{theError}}
+            </div>
+            {{else}}
+                {{#each popularGames}}
+                        <div class="list-group">
+                        <a href="/mainpage/{{gid}}" class="list-group-item list-group-item-action ">
+                            <img
+                            src="/public/img/logo.png"
+                            class="game-image"
+                            /><p class="game—text">{{gname}}</p><p class="game—text">achivements number:{{gid}}</p>
+                        </a>
+                        </div>
+                {{/each}}
+            {{/if}}
+        </div>
+        
+
+        {{!-- {{#each listHumans}} --}}
+            {{!-- <div>
+               - {{id}}: <a href="/humans/{{id}}">{{name}} </a>
+            </div> --}}
+            
+            {{!-- 手风琴 --}}
+            {{!-- <div class="content">
+                <div class="accordion">
+                    
+                    <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c{{id}}" aria-expanded="false" aria-controls="c{{id}}">
+                        <img
+                        src="/img/logo.png"
+                        class="logo-image"
+                        />
+                        Accordion Item #{{id}}  {{name}}
+                        </button>
+                    </h2>
+                    <div id="c{{id}}" class="accordion-collapse collapse" >
+                        <div class="accordion-body">
+                        <strong>This is the second item's accordion body.</strong> It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the <code>.accordion-body</code>, though the transition does limit overflow.
+                        <form action="" method="get" class="form-example">
+                    <div class="form-example">
+                        <label for="name">Enter your name: </label>
+                        <input type="text" name="name" id="name" required />
+                    </div>
+                    <div class="form-example">
+                        <label for="email">Enter your email: </label>
+                        <input type="email" name="email" id="email" required />
+                    </div>
+                    <div class="form-example">
+                        <input type="submit" value="Subscribe!" />
+                    </div>
+                    </form>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+            </div> --}}
+        {{!-- {{/each}} --}}
+    </div>
+</div>
