@@ -1,0 +1,17 @@
+@url=http://localhost:8080/api
+@json=Content-Type: application/json
+
+
+
+
+
+###
+post http://localhost:8080/api/register
+Content-Type: application/json
+
+{
+    "username": "qwe",
+    "pass":"12345"
+}
+###
+post {{url}}/login
