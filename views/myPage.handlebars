@@ -1,0 +1,22 @@
+<div id="main">
+        {{!-- <form action="/api/login" method="post"> <!-- 修改 action 为登录路由 -->
+            <img class="mb-4" src="/img/logo.png" alt="logo-image" width="70" height="70">
+            <h1 class="h3 mb-3 fw-normal">Please Log In</h1> <!-- 修改标题文本 -->
+            <div class="form-floating">
+                <input type="text" class="form-control" id="floatingInput" placeholder="User name" name="username">
+                <label for="floatingInput">User name</label>
+            </div>
+            <div class="form-floating">
+                <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
+                <label for="floatingPassword">Password</label>
+            </div>
+            <button class="btn w-100 py-2" id="login-btn" type="submit">Log In</button> <!-- 修改按钮文本 -->
+        </form> --}}
+        {{#if name}}
+        <div>Hi {{name}}</div>
+        {{else}}
+        {{/if}}
+        <form action="/logout" method="post">
+            <button class="btn w-100 py-2" id="login-btn" type="submit">Log out</button> <!-- 修改按钮文本 -->
+        </form>
+</div>

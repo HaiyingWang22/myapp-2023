@@ -79,6 +79,11 @@ border-top-right-radius: 0;
     font-weight: bold;
     color: #dcdcdc;
 }
+.bookmark-list{
+    display: flex;
+    flex-direction:row;
+    border: 2px solid #cdcdcd; 
+}
 .poplar-game-list{
     display: flex;
     flex-direction:column;
@@ -346,6 +351,10 @@ border-top-right-radius: 0;
     }
     .title-404{
         font-size: 80px;
+    }
+    .bookmark-list{
+        flex-direction:column;
+    
     }
     
 }

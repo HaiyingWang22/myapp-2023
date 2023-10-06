@@ -4,17 +4,28 @@ const port = 8080 // defines the port
 const app = express() // creates the Express application
 const sqlite3 = require('sqlite3')
 const db = new sqlite3.Database('project.db')
-const session = require('express-session')
 const Handlebars = require('handlebars');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken')
+const secret = 'qwertyuiopå'
+const cookieParser = require('cookie-parser');
+
+
+
+// db.run('PRAGMA foreign_keys = ON', (err) => {
+//   if (err) {
+//     console.error('Error enabling foreign key support:', err.message);
+//   } else {
+//     console.log('Foreign key support enabled.');
+//   }
+// });
 
 
 db.run("CREATE TABLE popularGames (gid INTEGER PRIMARY KEY, gname TEXT NOT NULL, gimgURL TEXT, P INTEGER NOT NULL, G INTEGER NOT NULL, S INTEGER NOT NULL, C INTEGER NOT NULL)", (error) => {
   if (error) {
     console.log("ERROR: ", error)
   } else {
-    console.log("---> Table projects created!")
+    console.log("---> Table popularGames created!")
   }
   const games=[ 
     {"id":"1", "name": "God of War Rägnarok", "url": "/img/1.png","P": "1","G":"3","S":"4","C":"1"},
@@ -31,7 +42,7 @@ db.run("CREATE TABLE popularGames (gid INTEGER PRIMARY KEY, gname TEXT NOT NULL,
       if (error) {
       console.log("ERROR: ", error)
       } else {
-      console.log("Line added into the projects table!")
+      console.log("Line added into the popularGames table!")
       }
     })
   })  
@@ -41,7 +52,7 @@ db.run("CREATE TABLE godOfWarAchivement (aid INTEGER PRIMARY KEY, aname TEXT NOT
   if (error) {
     console.log("ERROR: ", error)
   } else {
-    console.log("---> Table projects created!")
+    console.log("---> Table godOfWarAchivement created!")
   }
   const achivements=[ 
     {"id":"1", "name": "The Bear and the Wolf", "url": "/img/1.png"},
@@ -88,7 +99,7 @@ db.run("CREATE TABLE godOfWarAchivement (aid INTEGER PRIMARY KEY, aname TEXT NOT
       if (error) {
       console.log("ERROR: ", error)
       } else {
-      console.log("Line added into the projects table!")
+      console.log("Line added into the godOfWarAchivement table!")
       }
     })
   })  
@@ -98,10 +109,33 @@ db.run("CREATE TABLE userInfo (uid INTEGER PRIMARY KEY AUTOINCREMENT, uname TEXT
   if (error) {
     console.log("ERROR: ", error)
   } else {
-    console.log("---> Table projects created!")
+    console.log("---> Table userInfo created!")
   }
 })
-
+db.run("CREATE TABLE bookmarks (bid INTEGER PRIMARY KEY AUTOINCREMENT, status TEXT, uname TEXT, gname INTEGER, gimgURL TEXT, FOREIGN KEY (uname) REFERENCES userInfo (uname), FOREIGN KEY (gname) REFERENCES popularGames (gname), FOREIGN KEY (gimgURL) REFERENCES popularGames (gimgURL))", (error) => {
+  if (error) {
+    console.log("ERROR: ", error)
+  } else {
+    console.log("---> Table bookmarks created!")
+  }
+  const games=[ 
+    {"id":"1","status":"playing", "uname":"qwe", "gname": "God of War Rägnarok", "url": "/img/1.png"},
+    {"id":"2","status":"played", "uname":"qwe", "gname": "GT7", "url": "/img/2.png"},
+    {"id":"3","status":"played", "uname":"qwe", "gname": "Call of Duty",  "url": "/img/3.png"},
+    {"id":"4","status":"playing", "uname":"qwe", "gname": "Resident Evil 4",  "url": "/img/4.png"},
+    {"id":"5","status":"playing", "uname":"qweq", "gname": "The last of Us",  "url": "/img/5.png"},
+    {"id":"6","status":"playing", "uname":"qwe", "gname": "Death Stranding",  "url": "/img/6.png"},
+  ]
+  games.forEach( (oneGame) => {
+    db.run("INSERT INTO bookmarks (bid, status, uname, gname, gimgURL) VALUES (?, ?, ?, ?, ?)", [oneGame.id, oneGame.status, oneGame.uname, oneGame.gname, oneGame.url], (error) => {
+      if (error) {
+      console.log("ERROR: ", error)
+      } else {
+      console.log("Line added into the bookmarks table!")
+      }
+    })
+  })  
+})
 // db.run("CREATE TABLE GT7Achivement (aid INTEGER PRIMARY KEY, aname TEXT NOT NULL, aimgURL TEXT)", (error) => {
 //   if (error) {
 //     console.log("ERROR: ", error)
@@ -140,6 +174,11 @@ app.set('views', './views');
 app.use(express.static('public'))
 // defines the final default route 404 NOT FOUND
 
+// middleware for read form body
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+
+
 // register helper 
 Handlebars.registerHelper('lessThanEqual', (value1, value2, options)=>{
   if (value1 <= value2) {
@@ -155,77 +194,17 @@ Handlebars.registerHelper('inRange', (value1, value2, value3, options)=> {
     return options.inverse(this);
   }
 });
-
-// middleware for read form body
-app.use(express.urlencoded({ extended: false }));
-
-
-app.use(session({
-  secret: "8964",
-  resave: false,
-  saveUninitialized: true 
-}))
-
-app.post('/api/register', async (req, res) => {
-    // const { username, password } = req.body;
-    const username = req.body.username;
-    const password = req.body.password;
-    if(password==null||username==null){
-      res.status(400).send({ error: 'Username already exists' });
-      res.render('register.handlebars');
-    }else{
-      db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
-        if (err) {
-            res.status(500).send({ error: 'Server error' });
-        } else if (row) {
-            res.status(400).send({ error: 'Username already exists' });
-        } else {
-            const hash = bcrypt.hashSync(password, 10);
-            db.run('INSERT INTO userInfo (uname, uhash) VALUES (?, ?)', [username, hash], (err) => {
-                if (err) {
-                    res.status(500).send({ error: 'Server error' });
-                } else {
-                    res.render('home.handlebars');
-                }
-            });
-        }
-      });
-    }
-});
-
-
-
-app.post('/api/login', async (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-  if(password==null||username==null){
-    res.status(400).send({ error: 'Username already exists' });
-    res.render('register.handlebars');
-  }else{
-    db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
-      if (err) {
-        res.status(500).send({ error: 'Server error' });
-      } else if (!row) {
-        res.status(401).send({ error: 'User not found' });
-      } else {
-        const result = bcrypt.compareSync(password, row.uhash);
-        if (result) {
-          // req.session.user = user;
-          res.render('home.handlebars')
-        } else {
-          res.status(401).send({ error: 'Wrong password' });
-        }
-      }
-    });
+Handlebars.registerHelper('Equal', (value1, value2, options)=>{
+  if (value1 === value2) {
+    return options.fn(this);
+  } else {
+    return options.inverse(this);
   }
 });
 
 
-// app.get('/humans/:id', function(request, response){
-//   const id = request.params.id 
-//   const model = humans[id]
-//   response.render('human.handlebars', model)
-// })
+
+
 
 
 
@@ -240,34 +219,197 @@ app.get('/contect', function(request, response){
   response.render('contect.handlebars')
 })
 app.get('/myPage',function(request, response){
-  if(false){
-  response.render('myPage.handlebars')
+  // 改为检测token
+  const Token = request.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const name = decoded.id;
+    response.render('myPage.handlebars', {name})
   }else{
-  response.render('register.handlebars')
+  response.render('login.handlebars')
   }
+})
+app.get('/login', function(request, response){
+  response.render('login.handlebars')
+})
+app.get('/createAccount', function(request, response){
+  response.render('register.handlebars')
 })
 
 
+app.post('/api/register', async (req, res) => {
+  // const { username, password } = req.body;
+  const username = req.body.username;
+  const password = req.body.password;
+  if(!password || !username){
+    res.render('register.handlebars', { message : 'Username or password is missing'});
+  }else{
+    db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
+      if (err) {
+          res.status(500).send({ error: 'Server error' });
+      } else if (row) {
+          res.render('register.handlebars', { message :  'Username already exists'});
+          // res.status(400);
+      } else {
+          const hash = bcrypt.hashSync(password, 10);
+          db.run('INSERT INTO userInfo (uname, uhash) VALUES (?, ?)', [username, hash], (err) => {
+              if (err) {
+                  res.status(500).send({ error: 'Server error' });
+              } else {
+                  // res.render('login.handlebars');
+                  res.render('login.handlebars', { message : 'Account created successfully !'});
+              }
+          });
+      }
+    });
+  }
+});
+
+
+app.post('/api/login', async (req, res) => {
+  const username = req.body.username;
+  const password = req.body.password;
+  if(!password || !username){
+    res.render('login.handlebars', { message : 'Username or password is missing'});
+  }else{
+    db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
+      if (err) {
+        res.status(500).send({ error: 'Server error' });
+      } else if (!row) {
+        res.render('login.handlebars', { message : 'User not found'});
+        // res.status(401).send({ error: 'User not found' });
+      } else {
+        const result = bcrypt.compareSync(password, row.uhash);
+        if (result) {
+          const name = row.uname
+          // console.log(username)
+          var token = jwt.sign({
+            id:String(name)
+          },secret, {
+            expiresIn: '1h' 
+          })
+          // res.render('myPage.handlebars')
+          // res.send({token:token})
+          res.cookie('token', token, { maxAge: 3600000 }); 
+          res.render('myPage.handlebars', {name})
+        } else {
+          res.render('login.handlebars', { message : 'Wrong password'});
+        }
+      }
+    });
+  }
+});
+
+app.post('/logout', (req, res) => {
+  res.clearCookie('token');
+  res.render('login.handlebars')
+});
+
+app.post('/api/mainpage/delete', (req, res) => {
+  const Token = req.cookies.token;
+  const gname = req.body.gname;
+  const decoded = jwt.verify(Token, secret);
+  const uname = decoded.id;
+  // if(Token){
+    try {
+      db.run('DELETE FROM bookmarks WHERE uname = ? AND gname = ?', [uname, gname], function(error) {
+        if (error) {
+          res.status(500).send({ error: 'Delete operation failed' });
+        } else {
+          // res.render('mainpage.handlebars')
+          const model = {
+            hasDatabaseError: false,
+            theError: "",
+            bookmarks: [],
+            popularGames: []
+    
+          };
+          db.all('SELECT * FROM bookmarks WHERE uname = ? ', [uname], function(error, bookmarklist){
+            if(bookmarklist){
+              if(error){
+                model.hasDatabaseError = true;
+                model.theError = error;
+              } else {
+                model.bookmarks = bookmarklist;
+              }
+            }
+            db.all("SELECT * FROM popularGames", function(error, gameArray){
+              if(error){
+                model.hasDatabaseError = true;
+                model.theError = error;
+              } else {
+                model.popularGames = gameArray;
+                console.log(model)
+                res.render('mainpage.handlebars', model);
+              }
+            });
+          });
+        }
+      });
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  // }
+});
 
 
 app.get('/mainpage', function(request, response){
-  db.all("SELECT * FROM popularGames", function(error,gameArray){
-    if(error){
-      const model={
-        hasDatabaseError: true,
-        theError: error,
-        popularGames: []
-      }
-      response.render('mainpage.handlebars', model)
-    }else{
-      const model={
+  const Token = request.cookies.token;
+  if(Token){
+    try {
+      const decoded = jwt.verify(Token, secret);
+      const uname = decoded.id;
+      
+      // 保存所有查询结果的对象
+      const model = {
         hasDatabaseError: false,
         theError: "",
-        popularGames: gameArray
-      }
-      response.render('mainpage.handlebars', model)
+        bookmarks: [],
+        popularGames: []
+      };
+
+      db.all('SELECT * FROM bookmarks WHERE uname = ? ', [uname], function(error, bookmarklist){
+        if(bookmarklist){
+          if(error){
+            model.hasDatabaseError = true;
+            model.theError = error;
+          } else {
+            model.bookmarks = bookmarklist;
+          }
+        }
+        db.all("SELECT * FROM popularGames", function(error, gameArray){
+          if(error){
+            model.hasDatabaseError = true;
+            model.theError = error;
+          } else {
+            model.popularGames = gameArray;
+            console.log(model)
+            response.render('mainpage.handlebars', model);
+          }
+        });
+      });
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
     }
-  })
+  }else{
+    db.all("SELECT * FROM popularGames", function(error,gameArray){
+      if(error){
+        const model={
+          hasDatabaseError: true,
+          theError: error,
+          popularGames: []
+        }
+        response.render('mainpage.handlebars', model)
+      }else{
+        const model={
+          hasDatabaseError: false,
+          theError: "",
+          popularGames: gameArray
+        }
+        response.render('mainpage.handlebars', model)
+      }
+    })
+  }
 })
 
 
@@ -365,4 +507,3 @@ app.use(function(req,res){
 app.listen(port, () => {
     console.log(`Server running and listening on port ${port}...`)
 })
-

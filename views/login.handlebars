@@ -6,9 +6,9 @@
         </div>
         {{else}}
         {{/if}}
-        <form action="/api/register" method="post">
+        <form action="/api/login" method="post"> 
             <img class="mb-4" src="/img/logo.png" alt="logo-image" width="70" height="70">
-            <h1 class="h3 mb-3 fw-normal">Please Register</h1>
+            <h1 class="h3 mb-3 fw-normal">Please Log In</h1> 
             <div class="form-floating">
                 <input type="text" class="form-control" id="floatingInput" placeholder="User name" name="username">
                 <label for="floatingInput">User name</label>
@@ -17,10 +17,8 @@
                 <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
                 <label for="floatingPassword">Password</label>
             </div>
-            <button class="btn w-100 py-2" id="login-btn" type="submit">Register</button>
+            <button class="btn w-100 py-2" id="login-btn" type="submit">Log In</button> 
         </form>
-            <a href="/login" class="menu-item"> log in</a>
+        <a href="/createAccount" class="menu-item"> creat account</a>
     </main>
-    
 </div>
-
