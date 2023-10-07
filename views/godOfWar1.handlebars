@@ -7,7 +7,15 @@
                 Sorry, There was a problem with the Database:{{theError}}
             </div>
             {{else}}
-                {{#each godOfWarAchivement}}
+                {{#if message}}
+                <div id="message" class="alert alert-danger" >
+                    {{message}}
+                </div>
+                {{else}}
+                {{/if}}
+                
+                {{#each mergedData.godOfWarAchivement}}
+                                    
                     {{#lessThanEqual aid 15}}
                         <div class="accordion">
                             <div class="accordion-item">
@@ -15,13 +23,37 @@
                                     <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c{{../aid}}" aria-expanded="false" aria-controls="c{{../aid}}">
                                     <img
                                     src="{{../aimgURL}}"
-                                    class="achivement-image"
+                                    class="logo-image"
                                     />
                                     #{{../aid}}  {{../aname}}
                                     </button>
+                                    
                                 </h2>
+                                
                                 <div id="c{{../aid}}" class="accordion-collapse collapse">
                                     <div class="accordion-body">
+                                        {{#if ../../mergedData.comments}}
+                                        <div>All reviews</div>
+                                        <ul class="list-group listForReviews">
+                                            {{#each ../../mergedData.comments}}
+                                                {{#Equal aid ../../aid}}
+                                                    <li class="list-group-item ">{{../uname}}: {{../comment}}</li>
+                                                {{/Equal}}
+                                            {{/each}}
+                                        </ul>
+                                        {{/if}} 
+                                        <div>
+                                            <form action="/api/creat/commentSubmit" method="post">
+                                                <div class="form-floating">
+                                                    <input type="hidden" name="aid" value="{{../aid}}">
+                                                    <input type="hidden" name="gid" value="{{../gid}}">
+                                                    <input type="hidden" name="pageNumber" value="1">
+                                                    <input type="text" class="form-control" id="floatingInput" placeholder="User name" name="comment">
+                                                    <label for="floatingInput">Write your own review</label>
+                                                    {{!-- <button class="btn w-100 py-2" type="submit">Log In</button>  --}}
+                                                </div>
+                                            </form> 
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -32,16 +64,18 @@
             {{/if}}
             <nav aria-label="Page navigation example" class="pagination-">
                 <ul class="pagination">
-                    <li class="page-item"><a class="page-link" href="#">Previous</a></li>
+                    <li class="page-item"><a class="page-link" href="/mainpage/1/3">Previous</a></li>
                     <li class="page-item active" aria-current="page"><a class="page-link" href="/mainpage/1/1">1</a></li>
                     <li class="page-item"><a class="page-link" href="/mainpage/1/2">2</a></li>
                     <li class="page-item"><a class="page-link" href="/mainpage/1/3">3</a></li>
-                    <li class="page-item"><a class="page-link" href="#">Next</a></li>
+                    <li class="page-item"><a class="page-link" href="/mainpage/1/2">Next</a></li>
                 </ul>
             </nav>
         </div>
     </div>
 </div>
+
+                                            
 
 
 

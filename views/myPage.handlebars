@@ -1,22 +1,69 @@
 <div id="main">
-        {{!-- <form action="/api/login" method="post"> <!-- 修改 action 为登录路由 -->
-            <img class="mb-4" src="/img/logo.png" alt="logo-image" width="70" height="70">
-            <h1 class="h3 mb-3 fw-normal">Please Log In</h1> <!-- 修改标题文本 -->
-            <div class="form-floating">
-                <input type="text" class="form-control" id="floatingInput" placeholder="User name" name="username">
-                <label for="floatingInput">User name</label>
+    {{#if message}}
+    <div id="message" class="alert alert-danger" >
+        {{message}}
+    </div>
+    {{else}}
+    {{/if}}
+    <div>
+    <img src="/img/default.png" alt="userImage">
+    {{#if name}}
+    <h1>Hi {{name}}</h1>
+    {{else}}
+    {{/if}}
+    </div>
+    {{#if hasDatabaseError}}
+    <div>
+        Sorry, There was a problem with the Database:{{theError}}
+    </div>
+    {{else}}
+    <div>
+        {{#each comments}}
+        <div class="accordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#c{{cid}}" aria-expanded="false" aria-controls="c{{cid}}">
+                    {{uname}}: {{comment}}
+                    </button>
+                </h2>
+                <div id="c{{cid}}" class="accordion-collapse collapse">
+                    <div class="accordion-body">
+                        <div>
+                            <form action="/api/myPage/update/:comment" method="post">
+                                <div class="form-floating">
+                                    <input type="hidden" name="cid" value="{{cid}}">
+                                    <input type="text" class="form-control" id="floatingInput" placeholder="User name" name="comment">
+                                    <label for="floatingInput">Write your own review</label>
+                                    <button class="btn w-100 py-2" type="submit">submit</button> 
+                                </div>
+                            </form> 
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="form-floating">
-                <input type="password" class="form-control" id="floatingPassword" placeholder="Password" name="password">
-                <label for="floatingPassword">Password</label>
-            </div>
-            <button class="btn w-100 py-2" id="login-btn" type="submit">Log In</button> <!-- 修改按钮文本 -->
-        </form> --}}
-        {{#if name}}
-        <div>Hi {{name}}</div>
+        </div>
         {{else}}
-        {{/if}}
-        <form action="/logout" method="post">
-            <button class="btn w-100 py-2" id="login-btn" type="submit">Log out</button> <!-- 修改按钮文本 -->
+        {{/each}}
+    </div>
+    {{/if}}
+    <div class="container mt-5">
+        <h2>Change password</h2>
+        <form action="/api/update/:password" method="post">
+            <div class="mb-3">
+            <label for="oldPassword" class="form-label">old password</label>
+            <input type="password" class="form-control" id="oldPassword" name="oldPassword" required>
+            </div>
+            <div class="mb-3">
+            <label for="newPassword" class="form-label">new password</label>
+            <input type="password" class="form-control" id="newPassword" name="newPassword" required>
+            </div>
+            <button type="submit" class="btn btn-primary">submit</button>
         </form>
+    </div>
+    <form action="/api/delete/:account" method="post">
+        <button class="btn w-100 py-2" id="login-btn" type="submit">Delete Account</button> 
+    </form>
+    <form action="/logout" method="post">
+        <button class="btn w-100 py-2" id="login-btn" type="submit">Log out</button> 
+    </form>
 </div>

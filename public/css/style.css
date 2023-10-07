@@ -91,14 +91,21 @@ border-top-right-radius: 0;
     padding: 20px;
     border-radius: 15px;
     align-items: center;
-    max-width: 500px;
+    /* max-width: 500px; */
     height: 1000px;
 }
-.list-group{
-    width: 450px;
+.listGroupForGame{
+    width: 600px;
     font-weight: bold;
     /* text-align: center; */
 
+}
+.listGroupForUser{
+    width: 450px;
+
+}
+.listForReviews{
+    font-weight: bold;
 }
 .game—text{
     display: inline-flex;
@@ -286,6 +293,7 @@ border-top-right-radius: 0;
     padding-right: 1fr;
 
 }
+
 
 
 

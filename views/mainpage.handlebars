@@ -1,5 +1,11 @@
 <div id="main">
     <div class="content">
+        {{#if message}}
+        <div id="message" class="alert alert-danger" >
+            {{message}}
+        </div>
+        {{else}}
+        {{/if}}
         {{#if bookmarks}}
         <h1>User Bookmark</h1>
         <div class="bookmark-list">
@@ -7,20 +13,27 @@
                 <h1>playing</h1>
                 {{#each bookmarks}}
                     {{#Equal status 'playing' }}
-                    <div class="list-group">
-                        <a  class="list-group-item list-group-item-action ">
+                    <div class="list-group listGroupForUser">
+                        <a  href="/mainpage/{{../gid}}/1" class="list-group-item list-group-item-action ">
                             <img
-                            src="/img/logo.png"
+                            src="{{../gimgURL}}"
                             class="game-image"
                             /><p class="game—text">{{../gname}}</p>
                         </a>
-                        <form action="/api/mainpage/delete" method="post"> 
+                        <form action="/api/mainpage/delete/:bookmark" method="post"> 
                             <input type="hidden" name="gname" value="{{../gname}}">
                             <button> 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-x" viewBox="0 0 16 16">
                                 <path d="M6.146 6.146a.5.5 0 0 1 .708 0L8 7.293l1.146-1.147a.5.5 0 1 1 .708.708L8.707 8l1.147 1.146a.5.5 0 0 1-.708.708L8 8.707 6.854 9.854a.5.5 0 0 1-.708-.708L7.293 8 6.146 6.854a.5.5 0 0 1 0-.708z"/>
                                 <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
                                 </svg>
+                            </button>
+                        </form>
+                        <form action="/api/mainpage/update/:status" method="post"> 
+                            <input type="hidden" name="gname" value="{{../gname}}">
+                            <input type="hidden" name="status" value="{{../status}}">
+                            <button> 
+                                changeStatus
                             </button>
                         </form>
                     </div>
@@ -32,20 +45,26 @@
                 <h1>played</h1>
                 {{#each bookmarks}}
                     {{#Equal status 'played' }}
-                    <div class="list-group">
-                        <a  class="list-group-item list-group-item-action ">
+                    <div class="list-group listGroupForUser">
+                        <a href="/mainpage/{{../gid}}/1" class="list-group-item list-group-item-action ">
                             <img
-                            src="/img/logo.png"
+                            src="{{../gimgURL}}"
                             class="game-image"
                             /><p class="game—text">{{../gname}}</p>
                         </a>
-                        <form action="/api/mainpage/delete" method="post"> 
+                        <form action="/api/mainpage/delete/:bookmark" method="post"> 
                             <input type="hidden" name="gname" value="{{../gname}}">
                             <button> 
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-x" viewBox="0 0 16 16">
                                 <path d="M6.146 6.146a.5.5 0 0 1 .708 0L8 7.293l1.146-1.147a.5.5 0 1 1 .708.708L8.707 8l1.147 1.146a.5.5 0 0 1-.708.708L8 8.707 6.854 9.854a.5.5 0 0 1-.708-.708L7.293 8 6.146 6.854a.5.5 0 0 1 0-.708z"/>
                                 <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2H4zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1z"/>
                                 </svg>
+                            </button>
+                        </form>
+                        <form action="/api/mainpage/update/:status" method="post"> 
+                            <input type="hidden" name="gname" value="{{../gname}}">
+                            <button> 
+                                changeStatus
                             </button>
                         </form>
                     </div>
@@ -64,21 +83,26 @@
             </div>
             {{else}}
                 {{#each popularGames}}
-                        <div class="list-group">
-                        <a href="/mainpage/{{gid}}/1" class="list-group-item list-group-item-action ">
-                            <img
-                            src="/public/img/logo.png"
-                            class="game-image"
-                            /><p class="game—text">{{gname}}</p><p class="game—text">achivements number:{{gid}}</p>
-                            
-                        </a>
+                    <div class="list-group listGroupForGame">
+                    <a href="/mainpage/{{gid}}/1" class="list-group-item list-group-item-action ">
+                        <img
+                        src="{{gimgURL}}"
+                        class="game-image"
+                        /><p class="game—text">{{gname}}</p><p class="game—text">achivements number:{{gid}}</p>
+                        
+                    </a>
+                    <form action="/api/mainpage/creat/:bookmark" method="post"> 
+                        <input type="hidden" name="gname" value="{{gname}}">
+                        <input type="hidden" name="gid" value="{{gid}}">
+                        <input type="hidden" name="gimgURL" value="{{gimgURL}}">
                         <button> 
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-folder-plus" viewBox="0 0 16 16">
-                        <path d="m.5 3 .04.87a1.99 1.99 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2Zm5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19c-.24 0-.47.042-.683.12L1.5 2.98a1 1 0 0 1 1-.98h3.672Z"/>
-                        <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5Z"/>
-                        </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-folder-plus" viewBox="0 0 6 6">
+                            <path d="m.5 3 .04.87a1.99 1.99 0 0 0-.342 1.311l.637 7A2 2 0 0 0 2.826 14H9v-1H2.826a1 1 0 0 1-.995-.91l-.637-7A1 1 0 0 1 2.19 4h11.62a1 1 0 0 1 .996 1.09L14.54 8h1.005l.256-2.819A2 2 0 0 0 13.81 3H9.828a2 2 0 0 1-1.414-.586l-.828-.828A2 2 0 0 0 6.172 1H2.5a2 2 0 0 0-2 2Zm5.672-1a1 1 0 0 1 .707.293L7.586 3H2.19c-.24 0-.47.042-.683.12L1.5 2.98a1 1 0 0 1 1-.98h3.672Z"/>
+                            <path d="M13.5 9a.5.5 0 0 1 .5.5V11h1.5a.5.5 0 1 1 0 1H14v1.5a.5.5 0 1 1-1 0V12h-1.5a.5.5 0 0 1 0-1H13V9.5a.5.5 0 0 1 .5-.5Z"/>
+                            </svg>
                         </button>
-                        </div>
+                    </form>
+                    </div>
                 {{/each}}
             {{/if}}
         </div>
