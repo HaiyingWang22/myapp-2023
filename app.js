@@ -191,160 +191,50 @@ Handlebars.registerHelper('unEqual', (value1, value2, options)=>{
 
 
 
-// static pages
-app.get('/', function(request, response){
-  response.render('home.handlebars')
-})
-app.get('/about', function(request, response){
-  response.render('about.handlebars')
-})
-app.get('/contect', function(request, response){
-  response.render('contect.handlebars')
-})
-app.get('/login', function(request, response){
-  response.render('login.handlebars')
-})
-app.get('/createAccount', function(request, response){
-  response.render('register.handlebars')
-})
-
-
-
-// User management system
-app.post('/api/register', async (req, res) => {
-  // const { username, password } = req.body;
-  const username = req.body.username;
-  const password = req.body.password;
-  if(!password || !username){
-    res.render('register.handlebars', { message : 'Username or password is missing'});
-  }else{
-    db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
-      if (err) {
-          res.status(500).send({ error: 'Server error' });
-      } else if (row) {
-          res.render('register.handlebars', { message :  'Username already exists'});
-          // res.status(400);
+// function for relode page
+function reloadAdminpage(res,message){
+  const model = {
+    hasDatabaseError: false,
+    theError: "",
+    comments: [],
+    message: "",
+    name:"Admin"
+  };
+  model.message = message;
+  db.all("SELECT * FROM comments", function(error,Array){
+    if(Array){
+      if(error){
+        model.hasDatabaseError = true;
+        model.theError = error;
       } else {
-          const hash = bcrypt.hashSync(password, 10);
-          db.run('INSERT INTO userInfo (uname, uhash) VALUES (?, ?)', [username, hash], (err) => {
-              if (err) {
-                  res.status(500).send({ error: 'Server error' });
-              } else {
-                  // res.render('login.handlebars');
-                  res.render('login.handlebars', { message : 'Account created successfully !'});
-              }
-          });
+        model.comments= Array;
+        res.render('myPage.handlebars', model)
       }
-    });
-  }
-});
-app.post('/api/login', async (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-  if(!password || !username){
-    res.render('login.handlebars', { message : 'Username or password is missing'});
-  }else{
-    db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
-      if (err) {
-        res.status(500).send({ error: 'Server error' });
-      } else if (!row) {
-        res.render('login.handlebars', { message : 'User not found'});
-        // res.status(401).send({ error: 'User not found' });
+    }
+  })
+}
+function reloadUserpage(res,uname,message){
+  const model = {
+    hasDatabaseError: false,
+    theError: "",
+    comments: [],
+    message: "",
+    name:""
+  };
+  model.name = uname;
+  model.message = message;
+  db.all('SELECT * FROM comments WHERE uname = ? ', [uname], function(error, Array){
+    if(Array){
+      if(error){
+        model.hasDatabaseError = true;
+        model.theError = error;
       } else {
-        const result = bcrypt.compareSync(password, row.uhash);
-        if (result) {
-          const name = row.uname
-          var token = jwt.sign({
-            id:String(name)
-          },secret, {
-            expiresIn: '1h' 
-          })
-          
-          res.cookie('token', token, { maxAge: 3600000 }); 
-          res.render('myPage.handlebars', {name})
-        } else {
-          res.render('login.handlebars', { message : 'Wrong password'});
-        }
+        model.comments= Array;
+        res.render('myPage.handlebars', model)
       }
-    });
-  }
-});
-app.post('/logout', (req, res) => {
-  res.clearCookie('token');
-  res.render('login.handlebars')
-});
-app.post('/api/update/:password', (req, res) => {
-  const Token = req.cookies.token;
-  const decoded = jwt.verify(Token, secret);
-  const uname = decoded.id;
-  const newPassword = req.body.newPassword;
-  const oldPassword = req.body.oldPassword;
-  console.log(oldPassword)
-  if(Token){
-    try {
-      db.get('SELECT * FROM userInfo WHERE uname = ?', [uname], (err, row) => {
-        if (err) {
-          res.status(500).send({ error: 'Server error' });
-        } else {
-          const result = bcrypt.compareSync(oldPassword, row.uhash);
-          if (result) {
-            const hash = bcrypt.hashSync(newPassword, 10);
-            db.run('UPDATE userInfo SET uhash = ? WHERE uname = ?', [hash, uname], function(error) {
-              if (error) {
-                res.status(500).send({ error: 'Failed to update data' });
-              } else {
-                res.render('myPage.handlebars', { message : 'Password has been updated'});
-              }
-            });
-          } else {
-            res.render('myPage.handlebars', { message : 'Wrong old password'});
-          }
-        }
-      });
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
     }
-  }else{
-    res.render('myPage.handlebars', { message : 'Error !'});
-  }
-});
-app.post('/api/delete/:account', (req, res) => {
-  const Token = req.cookies.token;
-  const decoded = jwt.verify(Token, secret);
-  const uname = decoded.id;
-  if(uname === "Admin"){
-    res.render('myPage.handlebars', { message : 'Administrator account cannot be deleted !'});
-  }else{
-    try {
-      db.get('SELECT * FROM userInfo WHERE uname = ?', [uname], function(error, row) {
-        if (error) {
-          res.status(500).send({ error: 'Database error' });
-        } else {
-          if (row) {
-            const userId = row.uid;
-            db.run('DELETE FROM userInfo WHERE uid = ?', [userId], function(error) {
-              if (error) {
-                res.status(500).send({ error: 'Delete operation failed' });
-              } else {
-                res.clearCookie('token');
-                res.render('login.handlebars', { message : 'Account deleted successfully !'})
-              }
-            });
-          } else {
-            res.status(404).send({ error: 'User not found' });
-          }
-        }
-      });
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
-    }
-  }
-});
-
-
-
-
-// CRUD operations on bookmarks（start）
+  })
+}
 function reloadMainpage(res,uname,message){
   const model = {
     hasDatabaseError: false,
@@ -375,182 +265,6 @@ function reloadMainpage(res,uname,message){
     });
   });
 }
-app.post('/api/mainpage/delete/:bookmark', (req, res) => {
-  const Token = req.cookies.token;
-  const gname = req.body.gname;
-  const decoded = jwt.verify(Token, secret);
-  const uname = decoded.id;
-
-  if(Token){
-    try {
-      db.run('DELETE FROM bookmarks WHERE uname = ? AND gname = ?', [uname, gname], function(error) {
-        if (error) {
-          res.status(500).send({ error: 'Delete operation failed' });
-        } else {
-          reloadMainpage(res,uname,null);
-        }
-      });
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
-    }
-  }
-});
-app.post('/api/mainpage/update/:bookmarkStatus', (req, res) => {
-  const Token = req.cookies.token;
-  const gname = req.body.gname;
-  const status = req.body.status;
-  const decoded = jwt.verify(Token, secret);
-  const uname = decoded.id;
-
-  if(Token){
-    try {
-      if(status==="playing"){
-        db.run('UPDATE bookmarks SET status = ? WHERE gname = ?', ["played", gname], function(error) {
-          if (error) {
-            res.status(500).send({ error: 'Failed to update data' });
-          } else {
-            reloadMainpage(res,uname,null);
-          }
-        });
-      }else{
-        db.run('UPDATE bookmarks SET status = ? WHERE gname = ?', ["playing", gname], function(error) {
-          if (error) {
-            res.status(500).send({ error: 'Failed to update data' });
-          } else {
-            reloadMainpage(res,uname,null);
-          }
-        });
-      }
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
-    }
-  }
-});
-app.post('/api/mainpage/creat/:bookmark', (req, res) => {
-  const Token = req.cookies.token;
-  if(Token){
-    const decoded = jwt.verify(Token, secret);
-    const uname = decoded.id;
-    const gname = req.body.gname;
-    const gid = req.body.gid;
-    const gimgURL = req.body.gimgURL;
-    const status = "playing";
-    try {
-      db.get('SELECT * FROM bookmarks WHERE uname = ? AND gname = ?', [uname, gname], (err, row) => {
-        if (err) {
-            res.status(500).send({ error: 'Server error' });
-        } else if (row) {
-            reloadMainpage(res,uname, 'You have already added this game !');
-        } else {
-          db.run('INSERT INTO bookmarks (status, uname, gname, gid, gimgURL) VALUES (?, ?, ?, ?, ?)', [status, uname, gname, gid, gimgURL], function(err) {
-            if (err) {
-              res.status(500).send({ error: 'Failed to insert data' });
-            } else {
-              reloadMainpage(res,uname,null);
-            }
-          }); 
-        }
-      });
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
-    }
-  }else{
-    reloadMainpage(res,null, 'Need to log in to your account !');
-    // res.render('mainpage.handlebars', { message : 'Need to log in to your account !'});
-  }
-});
-app.get('/api/mainpage', function(req, res){
-  const Token = req.cookies.token;
-  if(Token){
-    try {
-      const decoded = jwt.verify(Token, secret);
-      const uname = decoded.id;
-      reloadMainpage(res,uname,null);
-    } catch (err) {
-      res.status(401).send({error:'Invalid token'});
-    }
-  }else{
-    db.all("SELECT * FROM popularGames", function(error,gameArray){
-      if(error){
-        const model={
-          hasDatabaseError: true,
-          theError: error,
-          popularGames: []
-        }
-        res.render('mainpage.handlebars', model)
-      }else{
-        const model={
-          hasDatabaseError: false,
-          theError: "",
-          popularGames: gameArray
-        }
-        res.render('mainpage.handlebars', model)
-      }
-    })
-  }
-})
-// CRUD operations on bookmarks（end）
-
-
-function reloadAdminpage(res,message){
-  const model = {
-    hasDatabaseError: false,
-    theError: "",
-    comments: [],
-    message: ""
-  };
-  model.message = message;
-  db.all("SELECT * FROM comments", function(error,Array){
-    if(Array){
-      if(error){
-        model.hasDatabaseError = true;
-        model.theError = error;
-      } else {
-        model.comments= Array;
-        res.render('myPage.handlebars', model)
-      }
-    }
-  })
-}
-function reloadUserpage(res,uname,message){
-  const model = {
-    hasDatabaseError: false,
-    theError: "",
-    comments: [],
-    message: ""
-  };
-  model.message = message;
-  db.all('SELECT * FROM comments WHERE uname = ? ', [uname], function(error, Array){
-    if(Array){
-      if(error){
-        model.hasDatabaseError = true;
-        model.theError = error;
-      } else {
-        model.comments= Array;
-        res.render('myPage.handlebars', model)
-      }
-    }
-  })
-}
-app.get('/myPage',function(req, res){
-  const Token = req.cookies.token;
-  if(Token){
-    const decoded = jwt.verify(Token, secret);
-    const uname = decoded.id;
-    if(uname === "Admin"){
-      reloadAdminpage(res,null);
-    }else{
-      reloadUserpage(res,uname,null)
-    }
-  }else{
-  res.render('login.handlebars')
-  }
-})
-
-
-
-
-// CRUD operations on commenst（start）
 function reloadAchivement1(res,gid,message){
   const model = {
     hasDatabaseError: false,
@@ -668,7 +382,335 @@ function reloadAchivement3(res,gid,message){
     });
   })
 }
-app.get('/mainpage/1/1',(req, res)=>{
+
+
+
+
+// static pages
+app.get('/', (req, res) => {
+  res.render('home.handlebars')
+})
+app.get('/about', (req, res) => {
+  res.render('about.handlebars')
+})
+app.get('/contect', (req, res) => {
+  response.render('contect.handlebars')
+})
+
+
+
+
+// User management system with CRUD operations()
+app.get('/login', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    res.status(404).render('404.handlebars');
+  }else{
+    res.render('login.handlebars')
+  }
+})
+app.get('/createAccount', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    res.status(404).render('404.handlebars');
+  }else{
+    res.render('register.handlebars')
+  }  
+})
+app.post('/logout', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    res.clearCookie('token');
+    res.render('login.handlebars')
+  }else{
+    res.status(404).render('404.handlebars');
+  }   
+});
+app.post('/api/register', async (req, res) => {
+  const Token = req.cookies.token;
+  if(!Token){
+    const username = req.body.username;
+    const password = req.body.password;
+    if(!password || !username){
+      res.render('register.handlebars', { message : 'Username or password is missing'});
+    }else{
+      db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
+        if (err) {
+            res.status(500).send({ error: 'Server error' });
+        } else if (row) {
+            res.render('register.handlebars', { message :  'Username already exists'});
+            // res.status(400);
+        } else {
+            const hash = bcrypt.hashSync(password, 10);
+            db.run('INSERT INTO userInfo (uname, uhash) VALUES (?, ?)', [username, hash], (err) => {
+                if (err) {
+                    res.status(500).send({ error: 'Server error' });
+                } else {
+                    // res.render('login.handlebars');
+                    res.render('login.handlebars', { message : 'Account created successfully !'});
+                }
+            });
+        }
+      });
+    }
+  }else{
+    res.status(404).render('404.handlebars');
+  }  
+});
+app.post('/api/login', async (req, res) => {
+  const Token = req.cookies.token;
+  if(!Token){
+    const username = req.body.username;
+    const password = req.body.password;
+    if(!password || !username){
+      res.render('login.handlebars', { message : 'Username or password is missing'});
+    }else{
+      db.get('SELECT * FROM userInfo WHERE uname = ?', [username], (err, row) => {
+        if (err) {
+          res.status(500).send({ error: 'Server error' });
+        } else if (!row) {
+          res.render('login.handlebars', { message : 'User not found'});
+          // res.status(401).send({ error: 'User not found' });
+        } else {
+          const result = bcrypt.compareSync(password, row.uhash);
+          if (result) {
+            const name = row.uname
+            var token = jwt.sign({
+              id:String(name)
+            },secret, {
+              expiresIn: '1h' 
+            })
+            res.cookie('token', token, { maxAge: 3600000 }); 
+            if(name === "Admin"){
+              reloadAdminpage(res,'Login Successful!');
+            }else{
+              reloadUserpage(res,name,'Login Successful!')
+            }
+            // res.render('myPage.handlebars', {name})
+          } else {
+            res.render('login.handlebars', { message : 'Wrong password'});
+          }
+        }
+      });
+    }
+  }else{
+    res.status(404).render('404.handlebars');
+  }
+});
+app.post('/api/update/:password', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const uname = decoded.id;
+    const newPassword = req.body.newPassword;
+    const oldPassword = req.body.oldPassword;
+    try {
+      db.get('SELECT * FROM userInfo WHERE uname = ?', [uname], (err, row) => {
+        if (err) {
+          res.status(500).send({ error: 'Server error' });
+        } else {
+          const result = bcrypt.compareSync(oldPassword, row.uhash);
+          if (result) {
+            const hash = bcrypt.hashSync(newPassword, 10);
+            db.run('UPDATE userInfo SET uhash = ? WHERE uname = ?', [hash, uname], function(error) {
+              if (error) {
+                res.status(500).send({ error: 'Failed to update data' });
+              } else {
+                if(uname === "Admin"){
+                  reloadAdminpage(res,'Password has been updated');
+                }else{
+                  reloadUserpage(res,uname,'Password has been updated')
+                }
+              }
+            });
+          } else {
+            res.render('myPage.handlebars', { message : 'Wrong old password'});
+          }
+        }
+      });
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }else{
+    res.status(404).render('404.handlebars');
+  }
+});
+app.post('/api/delete/:account', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const uname = decoded.id;
+    if(uname === "Admin"){
+      res.render('myPage.handlebars', { message : 'Administrator account cannot be deleted !'});
+    }else{
+      try {
+        db.get('SELECT * FROM userInfo WHERE uname = ?', [uname], function(error, row) {
+          if (error) {
+            res.status(500).send({ error: 'Database error' });
+          } else {
+            if (row) {
+              const userId = row.uid;
+              db.run('DELETE FROM userInfo WHERE uid = ?', [userId], function(error) {
+                if (error) {
+                  res.status(500).send({ error: 'Delete operation failed' });
+                } else {
+                  res.clearCookie('token');
+                  res.render('login.handlebars', { message : 'Account deleted successfully !'})
+                }
+              });
+            } else {
+              res.status(404).send({ error: 'User not found' });
+            }
+          }
+        });
+      } catch (err) {
+        res.status(401).send({error:'Invalid token'});
+      }
+    }
+  }else{
+    res.status(404).render('404.handlebars');
+  }  
+});
+
+
+// individual page
+app.get('/myPage',function(req, res){
+  const Token = req.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const uname = decoded.id;
+    if(uname === "Admin"){
+      reloadAdminpage(res,null);
+    }else{
+      reloadUserpage(res,uname,null)
+    }
+  }else{
+  res.render('login.handlebars')
+  }
+})
+
+
+// CRUD operations on bookmarks（start）
+
+app.post('/api/mainpage/delete/:bookmark', (req, res) => {
+  const Token = req.cookies.token;
+  const gname = req.body.gname;
+  const decoded = jwt.verify(Token, secret);
+  const uname = decoded.id;
+
+  if(Token){
+    try {
+      db.run('DELETE FROM bookmarks WHERE uname = ? AND gname = ?', [uname, gname], function(error) {
+        if (error) {
+          res.status(500).send({ error: 'Delete operation failed' });
+        } else {
+          reloadMainpage(res,uname,null);
+        }
+      });
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }
+});
+app.post('/api/mainpage/update/:bookmarkStatus', (req, res) => {
+  const Token = req.cookies.token;
+  const gname = req.body.gname;
+  const status = req.body.status;
+  const decoded = jwt.verify(Token, secret);
+  const uname = decoded.id;
+
+  if(Token){
+    try {
+      if(status==="playing"){
+        db.run('UPDATE bookmarks SET status = ? WHERE gname = ?', ["played", gname], function(error) {
+          if (error) {
+            res.status(500).send({ error: 'Failed to update data' });
+          } else {
+            reloadMainpage(res,uname,null);
+          }
+        });
+      }else{
+        db.run('UPDATE bookmarks SET status = ? WHERE gname = ?', ["playing", gname], function(error) {
+          if (error) {
+            res.status(500).send({ error: 'Failed to update data' });
+          } else {
+            reloadMainpage(res,uname,null);
+          }
+        });
+      }
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }
+});
+app.post('/api/mainpage/creat/:bookmark', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const uname = decoded.id;
+    const gname = req.body.gname;
+    const gid = req.body.gid;
+    const gimgURL = req.body.gimgURL;
+    const status = "playing";
+    try {
+      db.get('SELECT * FROM bookmarks WHERE uname = ? AND gname = ?', [uname, gname], (err, row) => {
+        if (err) {
+            res.status(500).send({ error: 'Server error' });
+        } else if (row) {
+            reloadMainpage(res,uname, 'You have already added this game !');
+        } else {
+          db.run('INSERT INTO bookmarks (status, uname, gname, gid, gimgURL) VALUES (?, ?, ?, ?, ?)', [status, uname, gname, gid, gimgURL], function(err) {
+            if (err) {
+              res.status(500).send({ error: 'Failed to insert data' });
+            } else {
+              reloadMainpage(res,uname,null);
+            }
+          }); 
+        }
+      });
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }else{
+    reloadMainpage(res,null, 'Need to log in to your account !');
+    // res.render('mainpage.handlebars', { message : 'Need to log in to your account !'});
+  }
+});
+app.get('/api/mainpage', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    try {
+      const decoded = jwt.verify(Token, secret);
+      const uname = decoded.id;
+      reloadMainpage(res,uname,null);
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }else{
+    db.all("SELECT * FROM popularGames", function(error,gameArray){
+      if(error){
+        const model={
+          hasDatabaseError: true,
+          theError: error,
+          popularGames: []
+        }
+        res.render('mainpage.handlebars', model)
+      }else{
+        const model={
+          hasDatabaseError: false,
+          theError: "",
+          popularGames: gameArray
+        }
+        res.render('mainpage.handlebars', model)
+      }
+    })
+  }
+})
+// CRUD operations on bookmarks（end）
+
+
+// CRUD operations on comments（start）
+app.get('/mainpage/1/1',(req, res) => {
   try {
     reloadAchivement1(res,1,null)
   } catch (err) {
@@ -676,14 +718,14 @@ app.get('/mainpage/1/1',(req, res)=>{
     
   }  
 })
-app.get('/mainpage/1/2', function(req, res){
+app.get('/mainpage/1/2', (req, res) => {
   try {
     reloadAchivement2(res,1,null)
   } catch (err) {
     res.status(401).send({error:'Invalid token'});
   } 
 })
-app.get('/mainpage/1/3', function(req, res){
+app.get('/mainpage/1/3', (req, res) => {
   try {
     reloadAchivement3(res,1,null)
   } catch (err) {
@@ -753,9 +795,8 @@ app.post('/api/myPage/update/:comment', (req, res) => {
   const decoded = jwt.verify(Token, secret);
   const uname = decoded.id;
   const comment = req.body.comment;
-  // console.log(comment)
   const cid = req.body.cid;
-  // console.log(cid)
+  if(Token){
     try {
       if(!comment){
         if(uname === "Admin"){
@@ -779,8 +820,44 @@ app.post('/api/myPage/update/:comment', (req, res) => {
     } catch (err) {
       res.status(401).send({error:'Invalid token'});
     }
+  }else{
+    res.status(404).render('404.handlebars');
+  }   
 });
-
+app.post('/api/myPage/delete/:comment', (req, res) => {
+  const Token = req.cookies.token;
+  if(Token){
+    const decoded = jwt.verify(Token, secret);
+    const uname = decoded.id;
+    const cid = req.body.cid;
+    console.log(cid)
+    try {
+      if(cid){
+        db.run('DELETE FROM comments WHERE cid = ?', [cid], function(error) {
+          if (error) {
+            res.status(500).send({ error: 'Database error' });
+          } else {
+            if(uname === "Admin"){
+              reloadAdminpage(res,'Comment delede successfully!')
+            }else{
+              reloadUserpage(res,uname,'Comment delede successfully!')
+            }
+          }
+        });
+      }else {
+        if(uname === "Admin"){
+          reloadAdminpage(res,'Error!')
+        }else{
+          reloadUserpage(res,uname,'Error')
+        }
+      }
+    } catch (err) {
+      res.status(401).send({error:'Invalid token'});
+    }
+  }else{
+    res.status(404).render('404.handlebars');
+  }  
+});
 // CRUD operations on commenst（end）
 
 
